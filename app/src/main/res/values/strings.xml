@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Lagos Java Devs</string>
+    <string name="title_activity_user_detail">User Detail</string>
+    <string name="view_profile">View profile on Github</string>
+
+    <string name="avatar_load_error">Couldn\'t load picture. Check internet connection</string>
+
+    <string name="no_internet">Failed to connect. Check internet connection</string>
+    <string name="title_activity_delete">DeleteActivity</string>
+    <string name="menu_share">Share</string>
+</resources>
