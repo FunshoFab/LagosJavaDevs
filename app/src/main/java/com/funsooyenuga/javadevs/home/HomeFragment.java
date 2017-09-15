@@ -9,7 +9,6 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +20,7 @@ import com.funsooyenuga.javadevs.api.GithubApi;
 import com.funsooyenuga.javadevs.api.GithubService;
 import com.funsooyenuga.javadevs.data.Result;
 import com.funsooyenuga.javadevs.data.User;
+import com.funsooyenuga.javadevs.data.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,8 @@ public class HomeFragment extends Fragment {
 
     private UserSelectedListener userSelectedListener;
 
-    private List<User> users = new ArrayList<>();
+    private UserRepository repository;
+    private GithubApi github;
 
 
     public HomeFragment() {
@@ -76,6 +77,9 @@ public class HomeFragment extends Fragment {
 
         // Retain this Fragment when there is a config change
         setRetainInstance(true);
+
+        repository = UserRepository.getInstance();
+        github = GithubService.createGithubService();
     }
 
     @Override
@@ -88,15 +92,13 @@ public class HomeFragment extends Fragment {
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
         DividerItemDecoration decoration = new DividerItemDecoration(getActivity(), layoutManager.getOrientation());
 
-        adapter = new UserAdapter(getActivity(), users, adapterListener);
+        adapter = new UserAdapter(getActivity(), new ArrayList<User>(), adapterListener);
 
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.addItemDecoration(decoration);
         recyclerView.setAdapter(adapter);
 
-        if (users.isEmpty()) {
-            fetchJavaDevs();
-        }
+        fetchJavaDevs();
 
         return v;
     }
@@ -104,17 +106,14 @@ public class HomeFragment extends Fragment {
     private void fetchJavaDevs() {
         progress.setVisibility(View.VISIBLE);
 
-        GithubApi github = GithubService.createGithubService();
-
         disposable.add(
-                github.getJavaDevs(GITHUB_QUERY)
+                repository.getJavaDevs(GITHUB_QUERY, github)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribeOn(Schedulers.io())
                         .subscribeWith(new DisposableObserver<Result>() {
                             @Override
                             public void onNext(Result value) {
-                                users = value.getUsers();
-                                showResult();
+                                showResult(value.getUsers());
                             }
 
                             @Override
@@ -129,7 +128,7 @@ public class HomeFragment extends Fragment {
         );
     }
 
-    private void showResult() {
+    private void showResult(List<User> users) {
         progress.setVisibility(View.GONE);
         adapter.refreshUsers(users);
     }
